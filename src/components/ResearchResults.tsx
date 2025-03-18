@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -24,22 +23,39 @@ import {
   Users, 
   PieChart,
   BarChart4, 
-  Activity
+  Activity,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ResearchResult } from '@/utils/researchAgents';
+import ReactMarkdown from 'react-markdown';
 
 interface ResearchResultsProps {
   results: ResearchResult | null;
   className?: string;
+  isLoading?: boolean;
 }
 
 const ResearchResults: React.FC<ResearchResultsProps> = ({ 
   results, 
-  className 
+  className,
+  isLoading = false
 }) => {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [mounted, setMounted] = useState(false);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
   if (!results) return null;
 
   const toggleSection = (section: string) => {
@@ -50,24 +66,63 @@ const ResearchResults: React.FC<ResearchResultsProps> = ({
   };
 
   const renderSectionContent = (content: string) => {
+    if (!content) return null;
+    
+    // Clean up the content
+    const cleanContent = content
+      .replace(/\*\*/g, '**') // Preserve markdown bold
+      .replace(/\*/g, '*') // Preserve markdown italic
+      .replace(/\n/g, '\n\n') // Add extra newlines for markdown
+      .replace(/###\s/g, '\n### ') // Ensure proper spacing for headers
+      .replace(/^\s*[-•]\s/gm, '\n* ') // Convert bullet points to markdown
+      .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
+      .trim();
+
     return (
       <div className="prose prose-sm dark:prose-invert max-w-none">
-        <div dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br/>') }} />
+        <ReactMarkdown
+          components={{
+            h3: ({ children }) => (
+              <h3 className="text-lg font-semibold mt-4 mb-2">{children}</h3>
+            ),
+            p: ({ children }) => (
+              <p className="mb-4 leading-relaxed">{children}</p>
+            ),
+            ul: ({ children }) => (
+              <ul className="list-disc pl-6 mb-4 space-y-1">{children}</ul>
+            ),
+            li: ({ children }) => (
+              <li className="text-sm">{children}</li>
+            ),
+            strong: ({ children }) => (
+              <strong className="font-semibold text-primary">{children}</strong>
+            ),
+            em: ({ children }) => (
+              <em className="italic text-muted-foreground">{children}</em>
+            ),
+          }}
+        >
+          {cleanContent}
+        </ReactMarkdown>
       </div>
     );
   };
 
   const downloadResults = () => {
-    const jsonString = JSON.stringify(results, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${results.companyName.replace(/\s+/g, '_')}_research_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      const jsonString = JSON.stringify(results, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${results.companyName.replace(/[^a-zA-Z0-9]/g, '_')}_research_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading results:', error);
+    }
   };
 
   return (

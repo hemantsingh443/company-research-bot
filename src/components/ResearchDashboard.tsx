@@ -7,6 +7,7 @@ import {
   PieChart, 
   BarChart4, 
   Loader2,
+  Globe,
   type LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -14,7 +15,7 @@ import LoadingAnimation from './LoadingAnimation';
 import CompanySearch from './CompanySearch';
 import AgentCard, { AgentStatus } from './AgentCard';
 import ResearchResults from './ResearchResults';
-import { ResearchResult, runResearch } from '@/utils/researchAgents';
+import { ResearchResult, runResearch, WebSource } from '@/utils/researchAgents';
 
 interface AgentInfo {
   id: string;
@@ -25,11 +26,12 @@ interface AgentInfo {
   progress: number;
 }
 
-const ResearchDashboard: React.FC = () => {
+const ResearchDashboard = (): JSX.Element => {
   const { toast } = useToast();
   const [isResearching, setIsResearching] = useState(false);
   const [companyName, setCompanyName] = useState<string>('');
   const [researchResults, setResearchResults] = useState<ResearchResult | null>(null);
+  const [webSources, setWebSources] = useState<WebSource[]>([]);
   const [agents, setAgents] = useState<AgentInfo[]>([
     {
       id: 'company',
@@ -81,10 +83,15 @@ const ResearchDashboard: React.FC = () => {
     );
   };
 
+  const addWebSource = (source: WebSource) => {
+    setWebSources(prev => [...prev, source]);
+  };
+
   const startResearch = async (company: string) => {
     setCompanyName(company);
     setIsResearching(true);
     setResearchResults(null);
+    setWebSources([]); // Reset web sources
     
     // Reset all agents
     setAgents(prevAgents =>
@@ -124,7 +131,7 @@ const ResearchDashboard: React.FC = () => {
       
       // Actual research happens here
       console.log(`Calling runResearch for ${company}`);
-      const result = await runResearch(company);
+      const result = await runResearch(company, addWebSource);
       console.log(`Research completed for ${company}`, result);
       
       // Clear all progress intervals after real research is done
@@ -210,6 +217,42 @@ const ResearchDashboard: React.FC = () => {
                   className={`animate-fade-in animation-delay-${index * 150}`}
                 />
               ))}
+            </div>
+
+            {/* Web Sources Visualization */}
+            <div className="mt-8">
+              <h2 className="text-xl font-medium text-foreground/90 mb-4 flex items-center gap-2">
+                <Globe className="h-5 w-5 text-primary" />
+                Sources Being Analyzed
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {webSources.map((source, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      "p-4 rounded-lg border bg-card text-card-foreground shadow-sm",
+                      "animate-fade-in animation-delay-100"
+                    )}
+                  >
+                    <div className="flex items-start gap-2">
+                      <Globe className="h-4 w-4 text-primary mt-1" />
+                      <div>
+                        <a
+                          href={source.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium hover:underline truncate block"
+                        >
+                          {source.title}
+                        </a>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {source.snippet}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
