@@ -1,12 +1,23 @@
-// Get API key from environment variables
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+// Get API key from environment variables or localStorage
+const getGeminiApiKey = () => {
+  const userKey = localStorage.getItem('user_gemini_key');
+  if (userKey) {
+    return userKey;
+  }
+  return import.meta.env.VITE_GEMINI_API_KEY;
+};
+
 // Updated API URL to use the latest endpoint
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent';
 
 // Validate API key
-if (!GEMINI_API_KEY) {
-  throw new Error('VITE_GEMINI_API_KEY is not set in environment variables');
-}
+const validateApiKey = () => {
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) {
+    throw new Error('No Gemini API key found. Please add your API key in settings.');
+  }
+  return apiKey;
+};
 
 export interface GeminiRequest {
   contents: {
@@ -52,7 +63,8 @@ export interface GeminiResponse {
 export const geminiGenerate = async (prompt: string): Promise<string> => {
   try {
     console.log(`Generating content with Gemini. Prompt length: ${prompt.length} characters`);
-    const url = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`;
+    const apiKey = validateApiKey();
+    const url = `${GEMINI_API_URL}?key=${apiKey}`;
     
     const request: GeminiRequest = {
       contents: [

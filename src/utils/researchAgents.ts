@@ -43,17 +43,24 @@ const companyOverviewAgent = async (companyName: string, onSourceFound?: (source
     const searchResults = await searchWeb(`${companyName} company overview history leadership latest news`);
     
     // Emit web sources if callback is provided
-    if (onSourceFound) {
+    if (onSourceFound && searchResults !== 'No search results found. Please try a different search query.') {
       const sources = searchResults.split('\n\n').map((result, index) => {
-        const [title, url, snippet] = result.split('\n');
+        const lines = result.split('\n');
+        if (lines.length < 3) return null;
+        
+        const title = lines[0].replace(/^Title: /, '');
+        const url = lines[1].replace(/^URL: /, '');
+        const snippet = lines[2].replace(/^Summary: /, '');
+        
         return {
-          url: url.replace(/^URL: /, ''),
-          title: title.replace(/^Title: /, ''),
-          snippet: snippet.replace(/^Snippet: /, ''),
+          url,
+          title,
+          snippet,
           agentId: 'company',
           timestamp: Date.now() + index * 100
         };
-      });
+      }).filter(Boolean) as WebSource[];
+      
       sources.forEach(onSourceFound);
     }
     
@@ -126,17 +133,24 @@ const financialAnalysisAgent = async (companyName: string, onSourceFound?: (sour
     const searchResults = await searchWeb(`${companyName} financial performance revenue profit earnings latest quarterly results`);
     
     // Emit web sources if callback is provided
-    if (onSourceFound) {
+    if (onSourceFound && searchResults !== 'No search results found. Please try a different search query.') {
       const sources = searchResults.split('\n\n').map((result, index) => {
-        const [title, url, snippet] = result.split('\n');
+        const lines = result.split('\n');
+        if (lines.length < 3) return null;
+        
+        const title = lines[0].replace(/^Title: /, '');
+        const url = lines[1].replace(/^URL: /, '');
+        const snippet = lines[2].replace(/^Summary: /, '');
+        
         return {
-          url: url.replace(/^URL: /, ''),
-          title: title.replace(/^Title: /, ''),
-          snippet: snippet.replace(/^Snippet: /, ''),
+          url,
+          title,
+          snippet,
           agentId: 'financial',
           timestamp: Date.now() + index * 100
         };
-      });
+      }).filter(Boolean) as WebSource[];
+      
       sources.forEach(onSourceFound);
     }
     
@@ -182,17 +196,24 @@ const marketResearchAgent = async (companyName: string, onSourceFound?: (source:
     const searchResults = await searchWeb(`${companyName} market share industry trends market position target customers`);
     
     // Emit web sources if callback is provided
-    if (onSourceFound) {
+    if (onSourceFound && searchResults !== 'No search results found. Please try a different search query.') {
       const sources = searchResults.split('\n\n').map((result, index) => {
-        const [title, url, snippet] = result.split('\n');
+        const lines = result.split('\n');
+        if (lines.length < 3) return null;
+        
+        const title = lines[0].replace(/^Title: /, '');
+        const url = lines[1].replace(/^URL: /, '');
+        const snippet = lines[2].replace(/^Summary: /, '');
+        
         return {
-          url: url.replace(/^URL: /, ''),
-          title: title.replace(/^Title: /, ''),
-          snippet: snippet.replace(/^Snippet: /, ''),
+          url,
+          title,
+          snippet,
           agentId: 'market',
           timestamp: Date.now() + index * 100
         };
-      });
+      }).filter(Boolean) as WebSource[];
+      
       sources.forEach(onSourceFound);
     }
     
@@ -232,17 +253,24 @@ const competitiveIntelligenceAgent = async (companyName: string, onSourceFound?:
     const searchResults = await searchWeb(`${companyName} competitors comparison competitive advantage industry rivals`);
     
     // Emit web sources if callback is provided
-    if (onSourceFound) {
+    if (onSourceFound && searchResults !== 'No search results found. Please try a different search query.') {
       const sources = searchResults.split('\n\n').map((result, index) => {
-        const [title, url, snippet] = result.split('\n');
+        const lines = result.split('\n');
+        if (lines.length < 3) return null;
+        
+        const title = lines[0].replace(/^Title: /, '');
+        const url = lines[1].replace(/^URL: /, '');
+        const snippet = lines[2].replace(/^Summary: /, '');
+        
         return {
-          url: url.replace(/^URL: /, ''),
-          title: title.replace(/^Title: /, ''),
-          snippet: snippet.replace(/^Snippet: /, ''),
+          url,
+          title,
+          snippet,
           agentId: 'competitors',
           timestamp: Date.now() + index * 100
         };
-      });
+      }).filter(Boolean) as WebSource[];
+      
       sources.forEach(onSourceFound);
     }
     
@@ -282,17 +310,24 @@ const investmentAnalysisAgent = async (companyName: string, onSourceFound?: (sou
     const searchResults = await searchWeb(`${companyName} investment potential stock performance risks opportunities growth forecast`);
     
     // Emit web sources if callback is provided
-    if (onSourceFound) {
+    if (onSourceFound && searchResults !== 'No search results found. Please try a different search query.') {
       const sources = searchResults.split('\n\n').map((result, index) => {
-        const [title, url, snippet] = result.split('\n');
+        const lines = result.split('\n');
+        if (lines.length < 3) return null;
+        
+        const title = lines[0].replace(/^Title: /, '');
+        const url = lines[1].replace(/^URL: /, '');
+        const snippet = lines[2].replace(/^Summary: /, '');
+        
         return {
-          url: url.replace(/^URL: /, ''),
-          title: title.replace(/^Title: /, ''),
-          snippet: snippet.replace(/^Snippet: /, ''),
+          url,
+          title,
+          snippet,
           agentId: 'investment',
           timestamp: Date.now() + index * 100
         };
-      });
+      }).filter(Boolean) as WebSource[];
+      
       sources.forEach(onSourceFound);
     }
     

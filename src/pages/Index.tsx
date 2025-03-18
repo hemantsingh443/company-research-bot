@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Helmet } from 'react-helmet';
-import ResearchDashboard from '@/components/ResearchDashboard';
+import ResearchDashboard from '../components/ResearchDashboard';
 
 const Index = () => {
   return (
