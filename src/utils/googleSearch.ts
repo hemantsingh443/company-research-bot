@@ -1,6 +1,6 @@
 
 const GOOGLE_SEARCH_API_KEY = 'AIzaSyBrIjeJv76lZ2-cImhPdBY8YSkUb465aAE';
-const GOOGLE_SEARCH_ENGINE_ID = 'c5e99782e33ac4c63'; // This is a placeholder - replace with the actual engine ID
+const GOOGLE_SEARCH_ENGINE_ID = '9748af396d1764ce6'; // Updated with the provided ID
 
 interface GoogleSearchResponse {
   items?: {
