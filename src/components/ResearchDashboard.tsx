@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { 
@@ -92,64 +91,58 @@ const ResearchDashboard: React.FC = () => {
       prevAgents.map(agent => ({ ...agent, status: 'idle', progress: 0 }))
     );
     
-    // Start a progressive research process
+    console.log(`Starting research for: ${company}`);
+    
     try {
-      // Company overview agent
+      // Start visual progress indicators
       updateAgentStatus('company', 'working');
       
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Setup progress intervals to show activity while real work happens
+      let progressIntervals: NodeJS.Timeout[] = [];
       
-      // Simulate progress updates
-      let progress = 0;
-      const progressInterval = setInterval(() => {
-        progress += 5;
-        if (progress <= 95) {
-          updateAgentStatus('company', 'working', progress);
-        } else {
-          clearInterval(progressInterval);
-        }
-      }, 300);
+      const agentIds = ['company', 'financial', 'market', 'competitors', 'investment'];
+      const startDelays = [0, 2000, 3500, 5000, 6500];
       
-      // Start financial agent after a delay
-      setTimeout(() => {
-        updateAgentStatus('financial', 'working');
-      }, 2000);
+      // Start progress animations for each agent
+      agentIds.forEach((agentId, index) => {
+        setTimeout(() => {
+          updateAgentStatus(agentId, 'working');
+          
+          let progress = 0;
+          const interval = setInterval(() => {
+            progress += 5;
+            if (progress <= 95) {
+              updateAgentStatus(agentId, 'working', progress);
+            } else {
+              clearInterval(interval);
+            }
+          }, 300);
+          
+          progressIntervals.push(interval);
+        }, startDelays[index]);
+      });
       
-      // Start market agent after a delay
-      setTimeout(() => {
-        updateAgentStatus('market', 'working');
-      }, 3500);
-      
-      // Start competitors agent after a delay
-      setTimeout(() => {
-        updateAgentStatus('competitors', 'working');
-      }, 5000);
-      
-      // Start investment agent after a delay
-      setTimeout(() => {
-        updateAgentStatus('investment', 'working');
-      }, 6500);
-      
-      // Complete the agents in sequence
-      setTimeout(() => updateAgentStatus('company', 'complete', 100), 8000);
-      setTimeout(() => updateAgentStatus('financial', 'complete', 100), 10000);
-      setTimeout(() => updateAgentStatus('market', 'complete', 100), 12000);
-      setTimeout(() => updateAgentStatus('competitors', 'complete', 100), 14000);
-      
-      // Run the actual research
+      // Actual research happens here
+      console.log(`Calling runResearch for ${company}`);
       const result = await runResearch(company);
+      console.log(`Research completed for ${company}`, result);
       
-      setTimeout(() => {
-        updateAgentStatus('investment', 'complete', 100);
-        setResearchResults(result);
-        setIsResearching(false);
-        
-        toast({
-          title: "Research Complete",
-          description: `Analysis for ${company} is ready to view.`,
-          duration: 5000,
-        });
-      }, 16000);
+      // Clear all progress intervals after real research is done
+      progressIntervals.forEach(interval => clearInterval(interval));
+      
+      // Update UI to reflect completion
+      agentIds.forEach(agentId => {
+        updateAgentStatus(agentId, 'complete', 100);
+      });
+      
+      setResearchResults(result);
+      setIsResearching(false);
+      
+      toast({
+        title: "Research Complete",
+        description: `Analysis for ${company} is ready to view.`,
+        duration: 5000,
+      });
       
     } catch (error) {
       console.error("Research error:", error);
@@ -167,7 +160,7 @@ const ResearchDashboard: React.FC = () => {
       
       toast({
         title: "Research Failed",
-        description: "Unable to complete the research. Please try again.",
+        description: error instanceof Error ? error.message : "Unable to complete the research. Please try again.",
         variant: "destructive",
         duration: 5000,
       });

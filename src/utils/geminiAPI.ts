@@ -45,6 +45,7 @@ export interface GeminiResponse {
 
 export const geminiGenerate = async (prompt: string): Promise<string> => {
   try {
+    console.log(`Generating content with Gemini. Prompt length: ${prompt.length} characters`);
     const url = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`;
     
     const request: GeminiRequest = {
@@ -80,6 +81,7 @@ export const geminiGenerate = async (prompt: string): Promise<string> => {
       ]
     };
 
+    console.log('Sending request to Gemini API...');
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -91,16 +93,19 @@ export const geminiGenerate = async (prompt: string): Promise<string> => {
     if (!response.ok) {
       const errorData = await response.json();
       console.error('Gemini API error:', errorData);
-      throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+      throw new Error(`Gemini API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
     }
 
+    console.log('Response received from Gemini API');
     const data: GeminiResponse = await response.json();
     
     if (!data.candidates || data.candidates.length === 0) {
       throw new Error('No response generated from Gemini');
     }
 
-    return data.candidates[0].content.parts[0].text;
+    const resultText = data.candidates[0].content.parts[0].text;
+    console.log(`Generated content length: ${resultText.length} characters`);
+    return resultText;
   } catch (error) {
     console.error('Error calling Gemini API:', error);
     throw error;

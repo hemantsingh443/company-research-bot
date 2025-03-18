@@ -17,14 +17,19 @@ export const searchWeb = async (query: string): Promise<string> => {
     // Note: In a production app, this would be done server-side to protect API key
     const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${encodeURIComponent(query)}`;
     
+    console.log(`Making request to: ${url.replace(GOOGLE_SEARCH_API_KEY, '[REDACTED]')}`);
+    
     const response = await fetch(url);
     
     if (!response.ok) {
+      const errorText = await response.text();
       console.error('Google Search API error:', response.status, response.statusText);
-      return `Unable to get latest information. Using AI knowledge instead.`;
+      console.error('Error details:', errorText);
+      return `Unable to get latest information. Error: ${response.status} ${response.statusText}. Using AI knowledge instead.`;
     }
     
     const data: GoogleSearchResponse = await response.json();
+    console.log('Search response received:', data.items ? `${data.items.length} results` : 'No results');
     
     if (!data.items || data.items.length === 0) {
       return `No search results found for ${query}. Using AI knowledge instead.`;
@@ -42,6 +47,7 @@ Summary: ${item.snippet}
     return results;
   } catch (error) {
     console.error('Error searching the web:', error);
+    // Return a more informative error message
     return `Web search error: ${error instanceof Error ? error.message : 'Unknown error'}. Using AI knowledge instead.`;
   }
 };
