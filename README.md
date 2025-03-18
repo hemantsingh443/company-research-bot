@@ -1,69 +1,99 @@
-# Welcome to your Lovable project
+# Company Research Intelligence
 
-## Project info
+An AI-powered company research platform that provides comprehensive business intelligence and investment analysis. The platform uses multiple AI agents to gather and analyze information from various sources, providing detailed insights about companies.
 
-**URL**: https://lovable.dev/projects/b98dc257-1586-4e75-bddb-bc1baad59750
+## Features
 
-## How can I edit this code?
+- 🔍 **Multi-Agent Research System**
+  - Company Overview Agent
+  - Financial Analysis Agent
+  - Market Research Agent
+  - Competitive Intelligence Agent
+  - ROI Analysis Agent
 
-There are several ways of editing your application.
+- 📊 **Real-Time Analysis**
+  - Live progress tracking
+  - Source visualization
+  - Dynamic content updates
 
-**Use Lovable**
+- 📱 **Modern UI/UX**
+  - Responsive design
+  - Dark mode support
+  - Interactive components
+  - Markdown rendering
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/b98dc257-1586-4e75-bddb-bc1baad59750) and start prompting.
+## Tech Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend**: React + TypeScript + Vite
+- **UI Components**: Radix UI + Tailwind CSS
+- **AI Integration**: Google Gemini API
+- **Search**: Google Custom Search API
 
-**Use your preferred IDE**
+## Getting Started
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Prerequisites
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Node.js 16.x or later
+- npm 7.x or later
+- Google Gemini API key
+- Google Custom Search API key and Search Engine ID
 
-Follow these steps:
+### Installation
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/hemantsingh443/company-research-bot.git
+   cd company-research-bot
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+3. Create a `.env` file in the root directory:
+   ```env
+   VITE_GEMINI_API_KEY=your_gemini_api_key
+   VITE_GOOGLE_API_KEY=your_google_api_key
+   VITE_GOOGLE_CSE_ID=your_custom_search_engine_id
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+### Building for Production
+
+```bash
+npm run build
 ```
 
-**Edit a file directly in GitHub**
+## Deployment
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The project is configured for deployment on Vercel. Simply connect your GitHub repository to Vercel and:
 
-**Use GitHub Codespaces**
+1. Set up the environment variables in your Vercel project settings
+2. Configure the build settings:
+   - Framework Preset: Vite
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Contributing
 
-## What technologies are used for this project?
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-This project is built with .
+## License
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## How can I deploy this project?
+## Acknowledgments
 
-Simply open [Lovable](https://lovable.dev/projects/b98dc257-1586-4e75-bddb-bc1baad59750) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+- [Google Gemini API](https://ai.google.dev/) for AI capabilities
+- [Radix UI](https://www.radix-ui.com/) for accessible components
+- [Tailwind CSS](https://tailwindcss.com/) for styling
+- [Vercel](https://vercel.com) for hosting
