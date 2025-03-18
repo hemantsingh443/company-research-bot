@@ -7,7 +7,8 @@ import {
   TrendingUp, 
   PieChart, 
   BarChart4, 
-  Loader2
+  Loader2,
+  type LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import LoadingAnimation from './LoadingAnimation';
@@ -20,7 +21,7 @@ interface AgentInfo {
   id: string;
   name: string;
   description: string;
-  icon: React.ComponentType<any>;
+  icon: LucideIcon;
   status: AgentStatus;
   progress: number;
 }

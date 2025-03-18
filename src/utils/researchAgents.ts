@@ -1,5 +1,6 @@
 
 import { geminiGenerate } from './geminiAPI';
+import { searchWeb } from './googleSearch';
 
 // Define the structure of research results
 export interface ResearchResult {
@@ -29,19 +30,18 @@ export interface ResearchResult {
   };
 }
 
-// Helper function to simulate web search results
-const simulateWebSearch = async (query: string): Promise<string> => {
-  // In a real app, this would call a search API
-  console.log(`Simulating web search for: ${query}`);
-  return `Simulated search results for: ${query}`;
-};
-
 // Company Overview Agent
 const companyOverviewAgent = async (companyName: string): Promise<any> => {
+  // Get latest information from Google Search
+  const searchResults = await searchWeb(`${companyName} company overview history leadership latest news`);
+  
   const prompt = `
     Act as a company research analyst. I need comprehensive information about ${companyName}.
     
-    Provide:
+    Here is the latest information from web searches:
+    ${searchResults}
+    
+    Using the above information and your knowledge, provide:
     1. A detailed summary of ${companyName} (at least 3 paragraphs)
     2. Company history, covering founding, major milestones, and evolution (at least 2 paragraphs)
     3. Current leadership team and management structure (at least 1 paragraph)
@@ -87,10 +87,15 @@ const companyOverviewAgent = async (companyName: string): Promise<any> => {
 
 // Financial Analysis Agent
 const financialAnalysisAgent = async (companyName: string): Promise<any> => {
+  const searchResults = await searchWeb(`${companyName} financial performance revenue profit earnings latest quarterly results`);
+  
   const prompt = `
     Act as a financial analyst focusing on ${companyName}.
     
-    Provide:
+    Here is the latest financial information from web searches:
+    ${searchResults}
+    
+    Using the above information and your knowledge, provide:
     1. A detailed analysis of ${companyName}'s financial performance over the past few years, including revenue trends, profitability, and growth rates. (2-3 paragraphs)
     2. A breakdown of key financial metrics (P/E ratio, EBITDA, debt-to-equity, etc.) and what they indicate about the company's financial health. (1-2 paragraphs)
     
@@ -109,10 +114,15 @@ const financialAnalysisAgent = async (companyName: string): Promise<any> => {
 
 // Market Research Agent
 const marketResearchAgent = async (companyName: string): Promise<any> => {
+  const searchResults = await searchWeb(`${companyName} market share industry trends market position target customers`);
+  
   const prompt = `
     Act as a market research analyst focusing on ${companyName}.
     
-    Provide:
+    Here is the latest market information from web searches:
+    ${searchResults}
+    
+    Using the above information and your knowledge, provide:
     1. An analysis of ${companyName}'s current market position, including market share, target demographics, and geographical presence. (2 paragraphs)
     2. An overview of relevant market trends, industry developments, and how they might impact ${companyName}'s business in the near future. (2 paragraphs)
     
@@ -131,10 +141,15 @@ const marketResearchAgent = async (companyName: string): Promise<any> => {
 
 // Competitive Intelligence Agent
 const competitiveIntelligenceAgent = async (companyName: string): Promise<any> => {
+  const searchResults = await searchWeb(`${companyName} competitors comparison competitive advantage industry rivals`);
+  
   const prompt = `
     Act as a competitive intelligence analyst focusing on ${companyName}.
     
-    Provide:
+    Here is the latest competitive information from web searches:
+    ${searchResults}
+    
+    Using the above information and your knowledge, provide:
     1. A list of ${companyName}'s main competitors with a brief description of each. (1-2 paragraphs)
     2. A comparative analysis between ${companyName} and its competitors, highlighting strengths, weaknesses, and competitive advantages. (2 paragraphs)
     
@@ -153,10 +168,15 @@ const competitiveIntelligenceAgent = async (companyName: string): Promise<any> =
 
 // ROI Analysis Agent
 const investmentAnalysisAgent = async (companyName: string): Promise<any> => {
+  const searchResults = await searchWeb(`${companyName} investment potential stock performance risks opportunities growth forecast`);
+  
   const prompt = `
     Act as an investment analyst focusing on ${companyName} from a potential investor's perspective.
     
-    Provide:
+    Here is the latest investment information from web searches:
+    ${searchResults}
+    
+    Using the above information and your knowledge, provide:
     1. A detailed analysis of ${companyName} as an investment opportunity, including current valuation considerations and potential future performance. (2-3 paragraphs)
     2. A clear assessment of investment risks associated with ${companyName}. (1 paragraph)
     3. A discussion of potential investment opportunities or growth catalysts for ${companyName}. (1 paragraph)
