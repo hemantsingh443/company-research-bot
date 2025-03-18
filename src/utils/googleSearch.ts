@@ -1,6 +1,14 @@
+// Get API keys from environment variables
+const GOOGLE_SEARCH_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
+const GOOGLE_SEARCH_ENGINE_ID = import.meta.env.VITE_GOOGLE_CSE_ID;
 
-const GOOGLE_SEARCH_API_KEY = 'AIzaSyBrIjeJv76lZ2-cImhPdBY8YSkUb465aAE';
-const GOOGLE_SEARCH_ENGINE_ID = '9748af396d1764ce6'; // Updated with the provided ID
+// Validate API keys
+if (!GOOGLE_SEARCH_API_KEY) {
+  throw new Error('VITE_GOOGLE_API_KEY is not set in environment variables');
+}
+if (!GOOGLE_SEARCH_ENGINE_ID) {
+  throw new Error('VITE_GOOGLE_CSE_ID is not set in environment variables');
+}
 
 interface GoogleSearchResponse {
   items?: {

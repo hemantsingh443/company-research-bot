@@ -1,7 +1,12 @@
-
-const GEMINI_API_KEY = 'AIzaSyDEgoGsbSxCPiei2e7bN6G7NCreFubyZFE';
+// Get API key from environment variables
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 // Updated API URL to use the latest endpoint
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent';
+
+// Validate API key
+if (!GEMINI_API_KEY) {
+  throw new Error('VITE_GEMINI_API_KEY is not set in environment variables');
+}
 
 export interface GeminiRequest {
   contents: {
