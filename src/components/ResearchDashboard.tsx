@@ -19,6 +19,8 @@ import { ResearchResult, runResearch, WebSource } from '@/utils/researchAgents';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import WebSourceCard from './WebSourceCard';
+import ThinkingProcess from './ThinkingProcess';
 
 interface AgentInfo {
   id: string;
@@ -27,6 +29,18 @@ interface AgentInfo {
   icon: LucideIcon;
   status: AgentStatus;
   progress: number;
+}
+
+interface ThinkingStep {
+  type: 'thinking' | 'searching' | 'browsing' | 'complete';
+  message: string;
+  timestamp: number;
+  searchQuery?: string;
+  results?: {
+    title: string;
+    url: string;
+    domain: string;
+  }[];
 }
 
 const ResearchDashboard = (): JSX.Element => {
@@ -78,6 +92,8 @@ const ResearchDashboard = (): JSX.Element => {
     },
   ]);
   const [error, setError] = useState<string | null>(null);
+  const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
+  const [startTime, setStartTime] = useState<number>(0);
 
   // Check if user is using their own API keys
   const isUsingUserKeys = {
@@ -103,20 +119,35 @@ const ResearchDashboard = (): JSX.Element => {
     setWebSources(prev => [...prev, source]);
   };
 
+  const addThinkingStep = (step: ThinkingStep) => {
+    setThinkingSteps(prev => [...prev, step]);
+  };
+
   const startResearch = async (company: string) => {
     setCompanyName(company);
     setIsResearching(true);
     setResearchResults(null);
-    setWebSources([]); // Reset web sources
+    setWebSources([]);
+    setThinkingSteps([]);
+    setStartTime(Date.now());
     
-    // Reset all agents
-    setAgents(prevAgents =>
-      prevAgents.map(agent => ({ ...agent, status: 'idle', progress: 0 }))
-    );
-    
-    console.log(`Starting research for: ${company}`);
+    // Initial thinking step
+    addThinkingStep({
+      type: 'thinking',
+      message: 'Starting comprehensive research...',
+      timestamp: Date.now()
+    });
     
     try {
+      // Add search step
+      addThinkingStep({
+        type: 'searching',
+        message: 'Gathering initial company information',
+        timestamp: Date.now(),
+        searchQuery: `${company} company information`,
+        results: []
+      });
+      
       // Start visual progress indicators
       updateAgentStatus('company', 'working');
       
@@ -145,10 +176,41 @@ const ResearchDashboard = (): JSX.Element => {
         }, startDelays[index]);
       });
       
+      // Add browsing step when sources are found
+      addThinkingStep({
+        type: 'browsing',
+        message: 'Analyzing reliable sources',
+        timestamp: Date.now()
+      });
+      
       // Actual research happens here
       console.log(`Calling runResearch for ${company}`);
-      const result = await runResearch(company, addWebSource);
-      console.log(`Research completed for ${company}`, result);
+      const result = await runResearch(company, (source) => {
+        addWebSource(source);
+        // Update the latest browsing step with new results
+        setThinkingSteps(prev => {
+          const lastBrowsingStep = prev.findIndex(step => step.type === 'browsing');
+          if (lastBrowsingStep === -1) return prev;
+          
+          const updatedStep = {
+            ...prev[lastBrowsingStep],
+            results: [
+              ...(prev[lastBrowsingStep].results || []),
+              {
+                title: source.title,
+                url: source.url,
+                domain: new URL(source.url).hostname.replace('www.', '')
+              }
+            ]
+          };
+          
+          return [
+            ...prev.slice(0, lastBrowsingStep),
+            updatedStep,
+            ...prev.slice(lastBrowsingStep + 1)
+          ];
+        });
+      });
       
       // Clear all progress intervals after real research is done
       progressIntervals.forEach(interval => clearInterval(interval));
@@ -156,6 +218,13 @@ const ResearchDashboard = (): JSX.Element => {
       // Update UI to reflect completion
       agentIds.forEach(agentId => {
         updateAgentStatus(agentId, 'complete', 100);
+      });
+      
+      // Add completion step
+      addThinkingStep({
+        type: 'complete',
+        message: 'Research complete! Preparing final report...',
+        timestamp: Date.now()
       });
       
       setResearchResults(result);
@@ -220,6 +289,11 @@ const ResearchDashboard = (): JSX.Element => {
         
         {isResearching && (
           <div className="w-full mt-8 mb-4">
+            <ThinkingProcess 
+              steps={thinkingSteps} 
+              elapsedTime={Date.now() - startTime}
+            />
+            
             <h2 className="text-xl font-medium text-foreground/90 mb-4">Research Progress</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               {agents.map((agent, index) => (
@@ -243,30 +317,11 @@ const ResearchDashboard = (): JSX.Element => {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {webSources.map((source, index) => (
-                  <div
-                    key={index}
-                    className={cn(
-                      "p-4 rounded-lg border bg-card text-card-foreground shadow-sm",
-                      "animate-fade-in animation-delay-100"
-                    )}
-                  >
-                    <div className="flex items-start gap-2">
-                      <Globe className="h-4 w-4 text-primary mt-1" />
-                      <div>
-                        <a
-                          href={source.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-medium hover:underline truncate block"
-                        >
-                          {source.title}
-                        </a>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                          {source.snippet}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <WebSourceCard
+                    key={source.url + index}
+                    source={source}
+                    index={index}
+                  />
                 ))}
               </div>
             </div>

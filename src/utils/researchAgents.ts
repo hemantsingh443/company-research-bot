@@ -65,25 +65,40 @@ const companyOverviewAgent = async (companyName: string, onSourceFound?: (source
     }
     
     const prompt = `
-      Act as a company research analyst. I need comprehensive information about ${companyName}.
-      
-      Here is the latest information from web searches:
+      You are a professional business analyst. Analyze the following information about ${companyName} and provide a structured response.
+
+      Available information:
       ${searchResults}
-      
-      Using the above information and your knowledge, provide:
-      1. A detailed summary of ${companyName} (at least 3 paragraphs)
-      2. Company history, covering founding, major milestones, and evolution (at least 2 paragraphs)
-      3. Current leadership team and management structure (at least 1 paragraph)
-      4. Five relevant tags/keywords that describe this company (e.g., technology, consumer goods, healthcare)
-      
-      Format your answer using markdown:
-      - Use **bold** for important terms and company names
+
+      Provide your analysis in the following format:
+      1. Company Summary (3 paragraphs)
+       - Focus on current business model and operations
+       - Include key products/services
+       - Highlight recent significant developments
+
+      2. Company History (2 paragraphs)
+       - Founding and early years
+       - Major milestones and growth phases
+       - Recent strategic changes
+
+      3. Leadership Structure (1 paragraph)
+       - Current executive team
+       - Key decision makers
+       - Recent leadership changes
+
+      4. Company Tags (5 keywords)
+       - Industry categories
+       - Business model types
+       - Market segments
+
+      Format your response using markdown:
+      - Use **bold** for company names and key terms
       - Use *italic* for emphasis
       - Use proper paragraph spacing
       - Use bullet points for lists
       - Use ### for section headers
-      
-      Be factual, comprehensive, and detailed.
+
+      Base your analysis only on the provided information. Do not make assumptions or include information not present in the sources.
     `;
     
     const response = await geminiGenerate(prompt);
@@ -155,23 +170,32 @@ const financialAnalysisAgent = async (companyName: string, onSourceFound?: (sour
     }
     
     const prompt = `
-      Act as a financial analyst focusing on ${companyName}.
-      
-      Here is the latest financial information from web searches:
+      You are a financial analyst. Analyze the following financial information about ${companyName} and provide a structured response.
+
+      Available information:
       ${searchResults}
-      
-      Using the above information and your knowledge, provide:
-      1. A detailed analysis of ${companyName}'s financial performance over the past few years, including revenue trends, profitability, and growth rates. (2-3 paragraphs)
-      2. A breakdown of key financial metrics (P/E ratio, EBITDA, debt-to-equity, etc.) and what they indicate about the company's financial health. (1-2 paragraphs)
-      
-      Format your answer using markdown:
-      - Use **bold** for important financial terms and metrics
+
+      Provide your analysis in the following format:
+      1. Financial Performance Analysis (2-3 paragraphs)
+       - Revenue trends and growth rates
+       - Profitability metrics
+       - Key financial highlights
+       - Recent performance changes
+
+      2. Key Financial Metrics (1-2 paragraphs)
+       - P/E ratio and valuation metrics
+       - EBITDA and operational metrics
+       - Debt-to-equity and leverage metrics
+       - Cash flow indicators
+
+      Format your response using markdown:
+      - Use **bold** for financial terms and metrics
       - Use *italic* for emphasis
       - Use proper paragraph spacing
       - Use bullet points for lists
       - Use ### for section headers
-      
-      Be factual, analytical, and detailed. If the company is private and specific financial data isn't publicly available, note this and provide estimates or available information.
+
+      Base your analysis only on the provided information. If specific metrics are not available, clearly state this.
     `;
     
     const response = await geminiGenerate(prompt);
@@ -218,16 +242,32 @@ const marketResearchAgent = async (companyName: string, onSourceFound?: (source:
     }
     
     const prompt = `
-      Act as a market research analyst focusing on ${companyName}.
-      
-      Here is the latest market information from web searches:
+      You are a market research analyst. Analyze the following market information about ${companyName} and provide a structured response.
+
+      Available information:
       ${searchResults}
-      
-      Using the above information and your knowledge, provide:
-      1. An analysis of ${companyName}'s current market position, including market share, target demographics, and geographical presence. (2 paragraphs)
-      2. An overview of relevant market trends, industry developments, and how they might impact ${companyName}'s business in the near future. (2 paragraphs)
-      
-      Format your answer in simple text. Be factual, analytical, and detailed.
+
+      Provide your analysis in the following format:
+      1. Market Position Analysis (2 paragraphs)
+       - Current market share
+       - Target customer segments
+       - Geographic presence
+       - Brand positioning
+
+      2. Market Trends and Impact (2 paragraphs)
+       - Industry developments
+       - Emerging trends
+       - Market challenges
+       - Growth opportunities
+
+      Format your response using markdown:
+      - Use **bold** for market terms and metrics
+      - Use *italic* for emphasis
+      - Use proper paragraph spacing
+      - Use bullet points for lists
+      - Use ### for section headers
+
+      Base your analysis only on the provided information. Focus on factual, verifiable data.
     `;
     
     const response = await geminiGenerate(prompt);
@@ -275,16 +315,32 @@ const competitiveIntelligenceAgent = async (companyName: string, onSourceFound?:
     }
     
     const prompt = `
-      Act as a competitive intelligence analyst focusing on ${companyName}.
-      
-      Here is the latest competitive information from web searches:
+      You are a competitive intelligence analyst. Analyze the following competitive information about ${companyName} and provide a structured response.
+
+      Available information:
       ${searchResults}
-      
-      Using the above information and your knowledge, provide:
-      1. A list of ${companyName}'s main competitors with a brief description of each. (1-2 paragraphs)
-      2. A comparative analysis between ${companyName} and its competitors, highlighting strengths, weaknesses, and competitive advantages. (2 paragraphs)
-      
-      Format your answer in simple text. Be factual, analytical, and detailed.
+
+      Provide your analysis in the following format:
+      1. Main Competitors Overview (1-2 paragraphs)
+       - List major competitors
+       - Market share comparison
+       - Key differentiators
+       - Industry positioning
+
+      2. Competitive Analysis (2 paragraphs)
+       - Strengths and weaknesses
+       - Competitive advantages
+       - Market opportunities
+       - Strategic positioning
+
+      Format your response using markdown:
+      - Use **bold** for competitor names and key terms
+      - Use *italic* for emphasis
+      - Use proper paragraph spacing
+      - Use bullet points for lists
+      - Use ### for section headers
+
+      Base your analysis only on the provided information. Focus on factual comparisons and verifiable data.
     `;
     
     const response = await geminiGenerate(prompt);
@@ -332,17 +388,38 @@ const investmentAnalysisAgent = async (companyName: string, onSourceFound?: (sou
     }
     
     const prompt = `
-      Act as an investment analyst focusing on ${companyName} from a potential investor's perspective.
-      
-      Here is the latest investment information from web searches:
+      You are an investment analyst. Analyze the following investment information about ${companyName} and provide a structured response.
+
+      Available information:
       ${searchResults}
-      
-      Using the above information and your knowledge, provide:
-      1. A detailed analysis of ${companyName} as an investment opportunity, including current valuation considerations and potential future performance. (2-3 paragraphs)
-      2. A clear assessment of investment risks associated with ${companyName}. (1 paragraph)
-      3. A discussion of potential investment opportunities or growth catalysts for ${companyName}. (1 paragraph)
-      
-      Format your answer in simple text. Be factual, balanced, and include both positive and negative aspects to give a fair assessment.
+
+      Provide your analysis in the following format:
+      1. Investment Analysis (2-3 paragraphs)
+       - Current valuation
+       - Growth potential
+       - Market position
+       - Financial health
+
+      2. Risk Assessment (1 paragraph)
+       - Market risks
+       - Operational risks
+       - Regulatory risks
+       - Competitive risks
+
+      3. Growth Opportunities (1 paragraph)
+       - Market expansion
+       - Product development
+       - Strategic initiatives
+       - Industry trends
+
+      Format your response using markdown:
+      - Use **bold** for financial terms and metrics
+      - Use *italic* for emphasis
+      - Use proper paragraph spacing
+      - Use bullet points for lists
+      - Use ### for section headers
+
+      Base your analysis only on the provided information. Include both positive and negative aspects for a balanced assessment.
     `;
     
     const response = await geminiGenerate(prompt);

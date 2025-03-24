@@ -43,7 +43,28 @@ export const searchWeb = async (query: string): Promise<string> => {
     console.log(`Searching web for: ${query}`);
     
     const { apiKey, cseId } = validateGoogleConfig();
-    const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cseId}&q=${encodeURIComponent(query)}`;
+    
+    // Add site: operator to focus on major business and financial sites
+    const majorSites = [
+      'reuters.com',
+      'bloomberg.com',
+      'forbes.com',
+      'cnbc.com',
+      'wsj.com',
+      'ft.com',
+      'yahoo.com/finance',
+      'marketwatch.com',
+      'businesswire.com',
+      'prnewswire.com',
+      'sec.gov',
+      'linkedin.com/company'
+    ];
+    
+    // Create a site-specific query
+    const siteQuery = majorSites.map(site => `site:${site}`).join(' OR ');
+    const enhancedQuery = `${query} (${siteQuery})`;
+    
+    const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cseId}&q=${encodeURIComponent(enhancedQuery)}`;
     
     // Log which API key is being used (user-provided or default)
     const isUserKey = localStorage.getItem('user_google_key') !== null;
@@ -79,15 +100,21 @@ export const searchWeb = async (query: string): Promise<string> => {
       return 'No search results found. Please try a different search query.';
     }
 
-    // Safely process each item
-    const processedResults = data.items.map(item => {
-      const title = item.title || 'No title';
-      const link = item.link || '#';
-      const snippet = item.snippet || 'No description available';
-      return `Title: ${title}\nURL: ${link}\nSummary: ${snippet}`;
-    }).join('\n\n---\n\n');
+    // Filter and process results to ensure they're from major sites
+    const processedResults = data.items
+      .filter(item => {
+        const url = item.link.toLowerCase();
+        return majorSites.some(site => url.includes(site));
+      })
+      .map(item => {
+        const title = item.title || 'No title';
+        const link = item.link || '#';
+        const snippet = item.snippet || 'No description available';
+        return `Title: ${title}\nURL: ${link}\nSummary: ${snippet}`;
+      })
+      .join('\n\n---\n\n');
 
-    return processedResults;
+    return processedResults || 'No results from major sources found. Please try a different search query.';
   } catch (error) {
     console.error('Error in searchWeb:', error);
     throw error;
