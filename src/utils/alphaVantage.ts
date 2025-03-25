@@ -3,37 +3,33 @@ let cachedApiKey: string | null = null;
 let previousKeys: string[] = [];
 
 const getApiKey = (): string => {
+  // First check for user-provided key
   const userKey = localStorage.getItem('user_alpha_vantage_key');
-  const envKey = import.meta.env.VITE_ALPHA_VANTAGE_API_KEY;
-  
-  // Check if the key changed
-  if (cachedApiKey && userKey && userKey !== cachedApiKey) {
-    console.log('API Key changed detected');
-    previousKeys.push(cachedApiKey);
-    cachedApiKey = null;
-    
-    // Reset daily call count when key changes
-    dailyCallCount = 0;
-    console.log('Reset daily call count due to key change');
-  }
-  
-  if (cachedApiKey) {
-    return cachedApiKey;
-  }
-  
   if (userKey) {
-    console.log('Using user provided API key:', userKey.substring(0, 4) + '...');
+    console.log('Using user-provided Alpha Vantage API key:', userKey.substring(0, 4) + '...');
+    // Check if the key changed
+    if (cachedApiKey && userKey !== cachedApiKey) {
+      console.log('API Key changed detected');
+      previousKeys.push(cachedApiKey);
+      cachedApiKey = null;
+      
+      // Reset daily call count when key changes
+      dailyCallCount = 0;
+      console.log('Reset daily call count due to key change');
+    }
     cachedApiKey = userKey;
     return userKey;
   }
   
+  // Fall back to environment variable
+  const envKey = import.meta.env.VITE_ALPHA_VANTAGE_API_KEY;
   if (envKey) {
-    console.log('Using environment API key');
+    console.log('Using environment variable Alpha Vantage API key:', envKey.substring(0, 4) + '...');
     cachedApiKey = envKey;
     return envKey;
   }
   
-  console.error('Alpha Vantage API key not found in settings or environment variables');
+  console.log('No Alpha Vantage API key found');
   return '';
 };
 

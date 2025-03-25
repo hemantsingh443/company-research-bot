@@ -1,13 +1,20 @@
 // Get API key from environment variables or localStorage
 const getGeminiApiKey = () => {
-  const envKey = import.meta.env.VITE_GEMINI_API_KEY;
-  if (envKey) {
-    return envKey;
-  }
+  // First check for user-provided key
   const userKey = localStorage.getItem('user_gemini_key');
   if (userKey) {
+    console.log('Using user-provided Gemini API key:', userKey.substring(0, 4) + '...');
     return userKey;
   }
+  
+  // Fall back to environment variable
+  const envKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (envKey) {
+    console.log('Using environment variable Gemini API key:', envKey.substring(0, 4) + '...');
+    return envKey;
+  }
+  
+  console.log('No Gemini API key found');
   return null;
 };
 

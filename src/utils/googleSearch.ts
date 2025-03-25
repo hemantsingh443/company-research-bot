@@ -1,25 +1,39 @@
 // Get API key and CSE ID from environment variables or localStorage
 const getGoogleApiKey = () => {
-  const envKey = import.meta.env.VITE_GOOGLE_API_KEY;
-  if (envKey) {
-    return envKey;
-  }
+  // First check for user-provided key
   const userKey = localStorage.getItem('user_google_key');
   if (userKey) {
+    console.log('Using user-provided Google API key:', userKey.substring(0, 4) + '...');
     return userKey;
   }
+  
+  // Fall back to environment variable
+  const envKey = import.meta.env.VITE_GOOGLE_API_KEY;
+  if (envKey) {
+    console.log('Using environment variable Google API key:', envKey.substring(0, 4) + '...');
+    return envKey;
+  }
+  
+  console.log('No Google API key found');
   return null;
 };
 
 const getGoogleCseId = () => {
-  const envCseId = import.meta.env.VITE_GOOGLE_CSE_ID;
-  if (envCseId) {
-    return envCseId;
-  }
+  // First check for user-provided CSE ID
   const userCseId = localStorage.getItem('user_google_cse_id');
   if (userCseId) {
+    console.log('Using user-provided Google CSE ID:', userCseId.substring(0, 4) + '...');
     return userCseId;
   }
+  
+  // Fall back to environment variable
+  const envCseId = import.meta.env.VITE_GOOGLE_CSE_ID;
+  if (envCseId) {
+    console.log('Using environment variable Google CSE ID:', envCseId.substring(0, 4) + '...');
+    return envCseId;
+  }
+  
+  console.log('No Google CSE ID found');
   return null;
 };
 
@@ -76,7 +90,7 @@ export const searchWeb = async (query: string): Promise<string> => {
     
     // Log which API key is being used (user-provided or default)
     const isUserKey = localStorage.getItem('user_google_key') !== null;
-    console.log(`Using ${isUserKey ? 'user-provided' : 'default'} Google Search API key`);
+    console.log(`Using ${isUserKey ? 'user-provided' : 'environment variable'} Google Search API key`);
     
     console.log(`Making request to: ${url.replace(apiKey, '[REDACTED]')}`);
     
