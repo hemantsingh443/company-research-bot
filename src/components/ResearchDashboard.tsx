@@ -95,18 +95,6 @@ const ResearchDashboard = (): JSX.Element => {
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
   const [startTime, setStartTime] = useState<number>(0);
 
-  // Check if user is using their own API keys
-  const isUsingUserKeys = {
-    google: localStorage.getItem('user_google_key') !== null && localStorage.getItem('user_google_key') !== '',
-    gemini: localStorage.getItem('user_gemini_key') !== null && localStorage.getItem('user_gemini_key') !== ''
-  };
-
-  // Check if environment variables are available
-  const hasEnvVars = {
-    google: !!import.meta.env.VITE_GOOGLE_API_KEY,
-    gemini: !!import.meta.env.VITE_GEMINI_API_KEY
-  };
-
   const updateAgentStatus = (agentId: string, status: AgentStatus, progress: number = 0) => {
     setAgents(prevAgents =>
       prevAgents.map(agent =>
@@ -337,33 +325,6 @@ const ResearchDashboard = (): JSX.Element => {
         {researchResults && (
           <ResearchResults results={researchResults} />
         )}
-
-        {/* API Key Status */}
-        <div className="mb-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">API Key Status:</h3>
-          <div className="space-y-1">
-            <div className="flex items-center text-sm">
-              <span className="font-medium">Google Search:</span>
-              <span className={`ml-2 ${isUsingUserKeys.google ? 'text-green-600' : hasEnvVars.google ? 'text-blue-600' : 'text-yellow-600'}`}>
-                {isUsingUserKeys.google 
-                  ? 'Using your API key' 
-                  : hasEnvVars.google 
-                    ? 'Using environment variable' 
-                    : 'Using default key (limited quota)'}
-              </span>
-            </div>
-            <div className="flex items-center text-sm">
-              <span className="font-medium">Gemini:</span>
-              <span className={`ml-2 ${isUsingUserKeys.gemini ? 'text-green-600' : hasEnvVars.gemini ? 'text-blue-600' : 'text-yellow-600'}`}>
-                {isUsingUserKeys.gemini 
-                  ? 'Using your API key' 
-                  : hasEnvVars.gemini 
-                    ? 'Using environment variable' 
-                    : 'Using default key (limited quota)'}
-              </span>
-            </div>
-          </div>
-        </div>
 
         {error && (
           <Alert variant="destructive">
