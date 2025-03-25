@@ -24,29 +24,41 @@ const App = () => {
 
   useEffect(() => {
     const updateApiStatus = () => {
+      // Check environment variables
       const hasEnvVars = {
-        google: !!import.meta.env.VITE_GOOGLE_API_KEY,
-        gemini: !!import.meta.env.VITE_GEMINI_API_KEY,
-        alphaVantage: !!import.meta.env.VITE_ALPHA_VANTAGE_API_KEY
+        google: Boolean(import.meta.env.VITE_GOOGLE_API_KEY),
+        gemini: Boolean(import.meta.env.VITE_GEMINI_API_KEY),
+        alphaVantage: Boolean(import.meta.env.VITE_ALPHA_VANTAGE_API_KEY)
       };
 
+      // Check localStorage
       const savedKeys = {
         google: localStorage.getItem('user_google_key'),
         gemini: localStorage.getItem('user_gemini_key'),
         alphaVantage: localStorage.getItem('user_alpha_vantage_key')
       };
 
+      // Log status for debugging
+      console.log('API Configuration Status:', {
+        environment: hasEnvVars,
+        localStorage: {
+          google: savedKeys.google ? 'Present' : 'Missing',
+          gemini: savedKeys.gemini ? 'Present' : 'Missing',
+          alphaVantage: savedKeys.alphaVantage ? 'Present' : 'Missing'
+        }
+      });
+
       setApiStatus({
         google: { 
-          valid: !!(savedKeys.google || hasEnvVars.google), 
+          valid: Boolean(savedKeys.google || hasEnvVars.google), 
           source: savedKeys.google ? 'User Key' : hasEnvVars.google ? 'Environment' : 'Not Set'
         },
         gemini: { 
-          valid: !!(savedKeys.gemini || hasEnvVars.gemini), 
+          valid: Boolean(savedKeys.gemini || hasEnvVars.gemini), 
           source: savedKeys.gemini ? 'User Key' : hasEnvVars.gemini ? 'Environment' : 'Not Set'
         },
         alphaVantage: { 
-          valid: !!(savedKeys.alphaVantage || hasEnvVars.alphaVantage), 
+          valid: Boolean(savedKeys.alphaVantage || hasEnvVars.alphaVantage), 
           source: savedKeys.alphaVantage ? 'User Key' : hasEnvVars.alphaVantage ? 'Environment' : 'Not Set'
         }
       });
@@ -56,12 +68,22 @@ const App = () => {
     updateApiStatus();
 
     // Listen for storage changes
-    const handleStorageChange = () => {
-      updateApiStatus();
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key?.includes('_key')) {
+        console.log('Storage change detected:', e.key);
+        updateApiStatus();
+      }
     };
 
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom storage events
+    window.addEventListener('storage-update', updateApiStatus);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('storage-update', updateApiStatus);
+    };
   }, []);
 
   return (

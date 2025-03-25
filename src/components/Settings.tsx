@@ -29,9 +29,9 @@ export const Settings: React.FC<SettingsProps> = ({ onClose }) => {
 
   // Check if environment variables are available
   const hasEnvVars = {
-    google: !!import.meta.env.VITE_GOOGLE_API_KEY,
-    gemini: !!import.meta.env.VITE_GEMINI_API_KEY,
-    alphaVantage: !!import.meta.env.VITE_ALPHA_VANTAGE_API_KEY
+    google: Boolean(import.meta.env.VITE_GOOGLE_API_KEY),
+    gemini: Boolean(import.meta.env.VITE_GEMINI_API_KEY),
+    alphaVantage: Boolean(import.meta.env.VITE_ALPHA_VANTAGE_API_KEY)
   };
 
   useEffect(() => {
@@ -60,6 +60,13 @@ export const Settings: React.FC<SettingsProps> = ({ onClose }) => {
         valid: !!(savedAlphaVantageKey || hasEnvVars.alphaVantage), 
         source: savedAlphaVantageKey ? 'User Key' : hasEnvVars.alphaVantage ? 'Environment' : 'Not Set'
       }
+    });
+
+    // Log environment variable status for debugging
+    console.log('Environment variables status:', {
+      google: hasEnvVars.google ? 'Present' : 'Missing',
+      gemini: hasEnvVars.gemini ? 'Present' : 'Missing',
+      alphaVantage: hasEnvVars.alphaVantage ? 'Present' : 'Missing'
     });
   }, []);
 
@@ -165,6 +172,8 @@ export const Settings: React.FC<SettingsProps> = ({ onClose }) => {
 
   const renderApiStatus = (api: 'gemini' | 'google' | 'alphaVantage') => {
     const status = apiStatus[api];
+    const envVar = hasEnvVars[api];
+    
     return (
       <div className="flex items-center space-x-2 mt-1">
         {status.valid ? (
@@ -172,9 +181,17 @@ export const Settings: React.FC<SettingsProps> = ({ onClose }) => {
         ) : (
           <XCircle className="h-4 w-4 text-red-500" />
         )}
-        <Badge variant={status.valid ? "success" : "destructive"} className="text-xs">
+        <Badge 
+          variant={status.valid ? "success" : "destructive"} 
+          className="text-xs"
+        >
           {status.source}
         </Badge>
+        {envVar && !settings[`${api}ApiKey`] && (
+          <Badge variant="secondary" className="text-xs">
+            ENV Available
+          </Badge>
+        )}
       </div>
     );
   };
