@@ -1,18 +1,26 @@
 // Get API key and CSE ID from environment variables or localStorage
 const getGoogleApiKey = () => {
+  const envKey = import.meta.env.VITE_GOOGLE_API_KEY;
+  if (envKey) {
+    return envKey;
+  }
   const userKey = localStorage.getItem('user_google_key');
   if (userKey) {
     return userKey;
   }
-  return import.meta.env.VITE_GOOGLE_API_KEY;
+  return null;
 };
 
 const getGoogleCseId = () => {
+  const envCseId = import.meta.env.VITE_GOOGLE_CSE_ID;
+  if (envCseId) {
+    return envCseId;
+  }
   const userCseId = localStorage.getItem('user_google_cse_id');
   if (userCseId) {
     return userCseId;
   }
-  return import.meta.env.VITE_GOOGLE_CSE_ID;
+  return null;
 };
 
 // Validate API key and CSE ID

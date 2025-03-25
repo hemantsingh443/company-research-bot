@@ -1,10 +1,14 @@
 // Get API key from environment variables or localStorage
 const getGeminiApiKey = () => {
+  const envKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (envKey) {
+    return envKey;
+  }
   const userKey = localStorage.getItem('user_gemini_key');
   if (userKey) {
     return userKey;
   }
-  return import.meta.env.VITE_GEMINI_API_KEY;
+  return null;
 };
 
 // Updated API URL to use the latest endpoint
