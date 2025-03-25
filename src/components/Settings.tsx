@@ -6,6 +6,7 @@ import { Label } from './ui/label';
 import { Alert, AlertDescription } from './ui/alert';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { Badge } from './ui/badge';
+import { toast } from './ui/use-toast';
 
 interface SettingsProps {
   onClose: () => void;
@@ -70,104 +71,44 @@ export const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     });
   }, []);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    setShowSuccess(false);
-    setShowError(false);
-
-    try {
-      // Check if the Alpha Vantage API key has changed
-      const previousAlphaVantageKey = localStorage.getItem('user_alpha_vantage_key');
-      const alphaVantageKeyChanged = previousAlphaVantageKey !== settings.alphaVantageApiKey;
-
-      // Save to localStorage
-      localStorage.setItem('user_gemini_key', settings.geminiApiKey);
+  const handleSave = () => {
+    // Save values to localStorage
+    if (settings.googleApiKey) {
       localStorage.setItem('user_google_key', settings.googleApiKey);
-      localStorage.setItem('user_google_cse_id', settings.googleCseId);
-      localStorage.setItem('user_alpha_vantage_key', settings.alphaVantageApiKey);
-
-      const newStatus = { ...apiStatus };
-
-      // Test Alpha Vantage API key if provided
-      if (settings.alphaVantageApiKey) {
-        try {
-          const testUrl = `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=AAPL&apikey=${settings.alphaVantageApiKey}`;
-          const response = await fetch(testUrl);
-          const data = await response.json();
-          
-          if (data.Information?.includes('Invalid API call')) {
-            throw new Error('Invalid Alpha Vantage API key');
-          }
-          newStatus.alphaVantage = { valid: true, source: 'User Key' };
-          if (data.Note?.includes('API call frequency')) {
-            console.warn('Alpha Vantage API rate limit reached, but key appears valid');
-          }
-        } catch (error) {
-          console.error('Alpha Vantage API test failed:', error);
-          newStatus.alphaVantage = { valid: false, source: 'Invalid Key' };
-        }
-      } else if (hasEnvVars.alphaVantage) {
-        newStatus.alphaVantage = { valid: true, source: 'Environment' };
-      } else {
-        newStatus.alphaVantage = { valid: false, source: 'Not Set' };
-      }
-
-      // Test Gemini API key
-      if (settings.geminiApiKey) {
-        const testUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent?key=${settings.geminiApiKey}`;
-        const response = await fetch(testUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: 'Test' }] }],
-            generationConfig: { temperature: 0.7, topK: 40, topP: 0.95, maxOutputTokens: 10 }
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error('Invalid Gemini API key');
-        }
-        newStatus.gemini = { valid: true, source: 'User Key' };
-      } else if (hasEnvVars.gemini) {
-        newStatus.gemini = { valid: true, source: 'Environment' };
-      } else {
-        newStatus.gemini = { valid: false, source: 'Not Set' };
-      }
-
-      // Update Google status
-      if (settings.googleApiKey) {
-        newStatus.google = { valid: true, source: 'User Key' };
-      } else if (hasEnvVars.google) {
-        newStatus.google = { valid: true, source: 'Environment' };
-      } else {
-        newStatus.google = { valid: false, source: 'Not Set' };
-      }
-
-      setApiStatus(newStatus);
-      setShowSuccess(true);
-      
-      // Force cache reset and page refresh if Alpha Vantage key changed
-      if (alphaVantageKeyChanged && settings.alphaVantageApiKey) {
-        console.log('Alpha Vantage API key changed, forcing cache reset');
-        
-        // Force a storage event to trigger cache clearing in other components
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'user_alpha_vantage_key',
-          newValue: settings.alphaVantageApiKey,
-          oldValue: previousAlphaVantageKey
-        }));
-
-        // Wait a moment before closing to allow the storage event to process
-        await new Promise(resolve => setTimeout(resolve, 200));
-      }
-      
-      setTimeout(() => onClose(), 1500);
-    } catch (error) {
-      console.error('Error saving settings:', error);
-      setShowError(true);
-    } finally {
-      setIsSaving(false);
+    } else {
+      localStorage.removeItem('user_google_key');
     }
+    
+    if (settings.googleCseId) {
+      localStorage.setItem('user_google_cse_id', settings.googleCseId);
+    } else {
+      localStorage.removeItem('user_google_cse_id');
+    }
+    
+    if (settings.geminiApiKey) {
+      localStorage.setItem('user_gemini_key', settings.geminiApiKey);
+    } else {
+      localStorage.removeItem('user_gemini_key');
+    }
+    
+    if (settings.alphaVantageApiKey) {
+      localStorage.setItem('user_alpha_vantage_key', settings.alphaVantageApiKey);
+    } else {
+      localStorage.removeItem('user_alpha_vantage_key');
+    }
+    
+    // Trigger manual reset for caches
+    window.dispatchEvent(new Event('alphavantage_reset'));
+    
+    // Force refresh other components watching localStorage
+    window.dispatchEvent(new Event('storage'));
+    
+    // Show success message
+    setIsSaving(false);
+    setShowSuccess(true);
+    toast({
+      description: "Settings saved. API keys will be used for future requests.",
+    });
   };
 
   const renderApiStatus = (api: 'gemini' | 'google' | 'alphaVantage') => {

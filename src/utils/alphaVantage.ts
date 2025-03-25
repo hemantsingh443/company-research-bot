@@ -1,70 +1,90 @@
 // Alpha Vantage API integration
-let cachedApiKey: string | null = null;
-let previousKeys: string[] = [];
 
+// Track the key that's actually being used for requests
+let activeApiKey: string | null = null;
+let dailyCallCount = 0;
+const DAILY_CALL_LIMIT = 25; // Standard Alpha Vantage limit
+
+/**
+ * Gets the API key with proper priority:
+ * 1. User-provided key from localStorage
+ * 2. Environment variable
+ */
 const getApiKey = (): string => {
-  // First check for user-provided key
+  // ALWAYS check localStorage fresh each time - no caching
   const userKey = localStorage.getItem('user_alpha_vantage_key');
-  if (userKey) {
-    console.log('Using user-provided Alpha Vantage API key:', userKey.substring(0, 4) + '...');
-    // Check if the key changed
-    if (cachedApiKey && userKey !== cachedApiKey) {
-      console.log('API Key changed detected');
-      previousKeys.push(cachedApiKey);
-      cachedApiKey = null;
-      
-      // Reset daily call count when key changes
+  if (userKey && userKey.trim() !== '') {
+    // If user key exists and is different from current active key, reset daily count
+    if (activeApiKey !== null && activeApiKey !== userKey) {
+      console.log('New user API key detected, resetting call count');
       dailyCallCount = 0;
-      console.log('Reset daily call count due to key change');
     }
-    cachedApiKey = userKey;
+    
+    console.log('Using user-provided Alpha Vantage API key:', userKey.substring(0, 4) + '...');
+    activeApiKey = userKey;
     return userKey;
   }
   
   // Fall back to environment variable
   const envKey = import.meta.env.VITE_ALPHA_VANTAGE_API_KEY;
-  if (envKey) {
+  if (envKey && envKey.trim() !== '') {
+    // If env key is different from current active key, reset daily count
+    if (activeApiKey !== null && activeApiKey !== envKey) {
+      console.log('Switching to environment API key, resetting call count');
+      dailyCallCount = 0;
+    }
+    
     console.log('Using environment variable Alpha Vantage API key:', envKey.substring(0, 4) + '...');
-    cachedApiKey = envKey;
+    activeApiKey = envKey;
     return envKey;
   }
   
   console.log('No Alpha Vantage API key found');
+  activeApiKey = null;
   return '';
 };
 
-// Force clear API key cache on page load and storage changes
-window.addEventListener('load', () => {
-  cachedApiKey = null;
-});
-
+// Reset API key and call counter when storage changes
 window.addEventListener('storage', (e) => {
   if (e.key === 'user_alpha_vantage_key') {
     console.log('Storage event: API key changed');
-    cachedApiKey = null;
-    dailyCallCount = 0; // Reset count with new key
+    activeApiKey = null; // Force re-read on next call
+    dailyCallCount = 0;
   }
 });
+
+// Reset on page load
+window.addEventListener('load', () => {
+  console.log('Page loaded, resetting API key cache');
+  activeApiKey = null;
+  dailyCallCount = 0;
+});
+
+// Custom event to force key refresh
+window.addEventListener('alphavantage_reset', () => {
+  console.log('Manual reset triggered');
+  activeApiKey = null;
+  dailyCallCount = 0;
+});
+
+// Reset call count daily
+const resetTime = new Date().setHours(0, 0, 0, 0);
+setInterval(() => {
+  const now = new Date();
+  const todayStart = now.setHours(0, 0, 0, 0);
+  if (todayStart > resetTime) {
+    console.log('New day detected, resetting call count');
+    dailyCallCount = 0;
+  }
+}, 60000); // Check every minute
 
 const BASE_URL = 'https://www.alphavantage.co/query?';
 
 // Rate limiting
 let lastCallTime = 0;
-const MIN_CALL_INTERVAL = 12000; // 12 seconds between calls to stay well under the limit
-let dailyCallCount = 0;
-const DAILY_CALL_LIMIT = 500;
-const lastResetTime = new Date().setHours(0, 0, 0, 0);
+const MIN_CALL_INTERVAL = 12000; // 12 seconds between calls
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Reset call count daily
-setInterval(() => {
-  const now = new Date();
-  const todayStart = now.setHours(0, 0, 0, 0);
-  if (todayStart > lastResetTime) {
-    dailyCallCount = 0;
-  }
-}, 60000); // Check every minute
 
 // Known companies mapping for common searches
 const knownCompanies: Record<string, string> = {
@@ -253,16 +273,23 @@ const isValidStockSymbol = (symbol: string): boolean => {
   return /^[A-Z]{1,5}(\.[A-Z]{1,2})?$/.test(symbol);
 };
 
+/**
+ * Fetches data from Alpha Vantage API with proper rate limiting
+ */
 const fetchAlphaVantage = async (params: Record<string, string>) => {
+  // Get a fresh API key (always read from sources, not cache)
   const apiKey = getApiKey();
   if (!apiKey) {
     throw new Error('Alpha Vantage API key not configured. Please add your API key in settings.');
   }
 
+  // Display which key is being used
+  console.log(`API request using key: ${apiKey.substring(0, 4)}...`);
+
   // Check daily limit
   if (dailyCallCount >= DAILY_CALL_LIMIT) {
     console.warn('Daily API call limit reached');
-    throw new Error('Daily API call limit reached. Please try again tomorrow or use a different API key.');
+    throw new Error(`Daily API call limit (${DAILY_CALL_LIMIT}) reached for key ${apiKey.substring(0, 4)}... Please try again tomorrow or use a different API key.`);
   }
 
   // Rate limiting
@@ -272,12 +299,15 @@ const fetchAlphaVantage = async (params: Record<string, string>) => {
     console.log(`Rate limiting: waiting ${(MIN_CALL_INTERVAL - timeSinceLastCall)/1000}s`);
     await wait(MIN_CALL_INTERVAL - timeSinceLastCall);
   }
-  lastCallTime = Date.now();
-
-  // Increment call count
+  
+  // Increment call count BEFORE the call
   dailyCallCount++;
   console.log(`API calls today: ${dailyCallCount}/${DAILY_CALL_LIMIT} (Key: ${apiKey.substring(0, 4)}...)`);
+  
+  // Update last call time
+  lastCallTime = Date.now();
 
+  // Build the request URL
   const queryString = new URLSearchParams({
     ...params,
     apikey: apiKey
@@ -288,19 +318,39 @@ const fetchAlphaVantage = async (params: Record<string, string>) => {
 
   try {
     const response = await fetch(url);
+    
+    // Handle non-OK responses
+    if (!response.ok) {
+      throw new Error(`Alpha Vantage API returned status ${response.status}: ${response.statusText}`);
+    }
+    
     const data = await response.json();
+
+    // Log raw response for debugging
+    console.log('Alpha Vantage raw response:', data);
 
     // Check for API-specific error messages
     if (data.Information || data.Note) {
       const message = data.Information || data.Note;
       console.error('Alpha Vantage API message:', message);
       
+      // Rate limit message
       if (message.includes('API call frequency') || message.includes('Thank you for using Alpha Vantage')) {
-        throw new Error(`Rate limit reached with key ${apiKey.substring(0, 4)}... Please try again in a minute or use a different API key.`);
+        throw new Error(`Rate limit reached with key ${apiKey.substring(0, 4)}... Please try again in a minute.`);
       }
       
+      // API key validity message
       if (message.includes('Invalid API call')) {
         throw new Error(`Invalid Alpha Vantage API key: ${apiKey.substring(0, 4)}... Please check your API key in settings.`);
+      }
+      
+      // Daily limit message (standard message pattern)
+      if (message.includes('standard API rate limit') && message.includes('requests per day')) {
+        // Extract key from the message for user clarity
+        const keyMatch = message.match(/API key as ([A-Z0-9]+)/);
+        const actualKey = keyMatch ? keyMatch[1] : apiKey.substring(0, 4) + '...';
+        
+        throw new Error(`Daily limit reached for key ${actualKey}. Please use a different API key or subscribe to a premium plan.`);
       }
 
       // If we get here, it's a general API message - throw it
@@ -310,28 +360,34 @@ const fetchAlphaVantage = async (params: Record<string, string>) => {
     return data;
   } catch (error) {
     console.error('API fetch error:', error);
+    
+    // If we hit an error, don't count this toward our daily limit
+    dailyCallCount = Math.max(0, dailyCallCount - 1);
+    
     throw error;
   }
 };
 
-// Cache for company symbols
-const symbolCache = new Map<string, string>();
+// Cache for company symbols (short lived)
+const symbolCache = new Map<string, { symbol: string, timestamp: number }>();
+const SYMBOL_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 export const getCompanySymbol = async (input: string): Promise<string> => {
-  // Check cache first
+  // Check symbol cache first
   const normalizedInput = input.trim().toLowerCase();
-  const cachedSymbol = symbolCache.get(normalizedInput);
-  if (cachedSymbol) {
-    console.log('Using cached symbol:', cachedSymbol);
-    return cachedSymbol;
+  const cachedItem = symbolCache.get(normalizedInput);
+  
+  if (cachedItem && (Date.now() - cachedItem.timestamp) < SYMBOL_CACHE_DURATION) {
+    console.log('Using cached symbol:', cachedItem.symbol);
+    return cachedItem.symbol;
   }
 
   try {
     // Check for known companies first (as a fast path)
     if (knownCompanies[normalizedInput]) {
       const symbol = knownCompanies[normalizedInput];
-      symbolCache.set(normalizedInput, symbol);
       console.log('Found in known companies:', symbol);
+      symbolCache.set(normalizedInput, { symbol, timestamp: Date.now() });
       return symbol;
     }
 
@@ -341,9 +397,6 @@ export const getCompanySymbol = async (input: string): Promise<string> => {
       function: 'SYMBOL_SEARCH',
       keywords: input
     }) as AlphaVantageSearchResult;
-
-    // Log raw response for debugging
-    console.log('Alpha Vantage raw response:', data);
 
     if (!data.bestMatches || data.bestMatches.length === 0) {
       console.log('No matches found for:', input);
@@ -417,7 +470,8 @@ export const getCompanySymbol = async (input: string): Promise<string> => {
       };
       console.log(`Found best match for "${input}":`, matchInfo);
       
-      symbolCache.set(normalizedInput, symbol);
+      // Cache the result
+      symbolCache.set(normalizedInput, { symbol, timestamp: Date.now() });
       return symbol;
     }
 
@@ -437,7 +491,7 @@ export const getCompanySymbol = async (input: string): Promise<string> => {
   }
 };
 
-// Cache for financial data
+// Cache for financial data (short lived)
 const financialDataCache = new Map<string, { data: FinancialData; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
