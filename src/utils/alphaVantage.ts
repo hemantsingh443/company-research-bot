@@ -326,46 +326,117 @@ export const getCompanySymbol = async (input: string): Promise<string> => {
   const normalizedInput = input.trim().toLowerCase();
   const cachedSymbol = symbolCache.get(normalizedInput);
   if (cachedSymbol) {
+    console.log('Using cached symbol:', cachedSymbol);
     return cachedSymbol;
   }
 
   try {
-    // Check for known companies first
+    // Check for known companies first (as a fast path)
     if (knownCompanies[normalizedInput]) {
       const symbol = knownCompanies[normalizedInput];
       symbolCache.set(normalizedInput, symbol);
+      console.log('Found in known companies:', symbol);
       return symbol;
     }
 
-    // If input looks like a stock symbol and is in mock data, use it
-    const upperInput = input.toUpperCase();
-    if (isValidStockSymbol(upperInput) && MOCK_DATA[upperInput as keyof typeof MOCK_DATA]) {
-      symbolCache.set(normalizedInput, upperInput);
-      return upperInput;
-    }
-
     // Search using Alpha Vantage
-    console.log('Searching for company:', input);
+    console.log('Searching Alpha Vantage API for:', input);
     const data = await fetchAlphaVantage({
       function: 'SYMBOL_SEARCH',
       keywords: input
     }) as AlphaVantageSearchResult;
 
-    // Find best US equity match
-    const bestMatch = data.bestMatches?.find(match => 
-      match['3. type'] === 'Equity' && 
-      match['4. region'] === 'United States'
+    // Log raw response for debugging
+    console.log('Alpha Vantage raw response:', data);
+
+    if (!data.bestMatches || data.bestMatches.length === 0) {
+      console.log('No matches found for:', input);
+      
+      // Try searching with partial match
+      const partialSearchData = await fetchAlphaVantage({
+        function: 'SYMBOL_SEARCH',
+        keywords: input.substring(0, Math.max(3, input.length))
+      }) as AlphaVantageSearchResult;
+      
+      console.log('Partial search results:', partialSearchData);
+      
+      if (!partialSearchData.bestMatches || partialSearchData.bestMatches.length === 0) {
+        return '';
+      }
+      
+      data.bestMatches = partialSearchData.bestMatches;
+    }
+
+    // Log all matches for debugging
+    const matches = data.bestMatches.map(match => ({
+      symbol: match['1. symbol'],
+      name: match['2. name'],
+      type: match['3. type'],
+      region: match['4. region'],
+      score: match['9. matchScore']
+    }));
+    console.log('Processed search results:', matches);
+
+    // Sort matches by score
+    const sortedMatches = [...data.bestMatches].sort((a, b) => 
+      parseFloat(b['9. matchScore']) - parseFloat(a['9. matchScore'])
     );
+
+    // Try different matching strategies
+    let bestMatch = null;
+
+    // 1. Try exact name match first
+    bestMatch = sortedMatches.find(match => 
+      match['2. name'].toLowerCase().includes(normalizedInput) &&
+      match['3. type'] === 'Equity'
+    );
+
+    // 2. If no exact match, try US equity
+    if (!bestMatch) {
+      bestMatch = sortedMatches.find(match => 
+        match['3. type'] === 'Equity' && 
+        match['4. region'] === 'United States'
+      );
+    }
+
+    // 3. If still no match, try any equity
+    if (!bestMatch) {
+      bestMatch = sortedMatches.find(match => 
+        match['3. type'] === 'Equity'
+      );
+    }
+
+    // 4. Last resort: take highest scoring match
+    if (!bestMatch && sortedMatches.length > 0) {
+      bestMatch = sortedMatches[0];
+    }
 
     if (bestMatch) {
       const symbol = bestMatch['1. symbol'];
+      const matchInfo = {
+        name: bestMatch['2. name'],
+        type: bestMatch['3. type'],
+        region: bestMatch['4. region'],
+        score: bestMatch['9. matchScore']
+      };
+      console.log(`Found best match for "${input}":`, matchInfo);
+      
       symbolCache.set(normalizedInput, symbol);
       return symbol;
     }
 
+    console.log(`No suitable match found for "${input}" after trying all matching strategies`);
     return '';
   } catch (error) {
-    console.error('Error getting company symbol:', error);
+    console.error('Error searching for company symbol:', error);
+    // Log the full error details
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+    }
     return '';
   }
 };
