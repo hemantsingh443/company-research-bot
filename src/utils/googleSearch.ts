@@ -1,15 +1,19 @@
 // Get API key and CSE ID from environment variables or localStorage
 const getGoogleApiKey = () => {
-  // First check for user-provided key
-  const userKey = localStorage.getItem('user_google_key');
-  if (userKey) {
-    console.log('Using user-provided Google API key:', userKey.substring(0, 4) + '...');
-    return userKey;
+  try {
+    // First check for user-provided key
+    const userKey = localStorage.getItem('user_google_key');
+    if (userKey && userKey.trim() !== '') {
+      console.log('Using user-provided Google API key:', userKey.substring(0, 4) + '...');
+      return userKey;
+    }
+  } catch (error) {
+    console.warn('Error accessing localStorage:', error);
   }
   
   // Fall back to environment variable
   const envKey = import.meta.env.VITE_GOOGLE_API_KEY;
-  if (envKey) {
+  if (envKey && envKey.trim() !== '') {
     console.log('Using environment variable Google API key:', envKey.substring(0, 4) + '...');
     return envKey;
   }
@@ -19,16 +23,20 @@ const getGoogleApiKey = () => {
 };
 
 const getGoogleCseId = () => {
-  // First check for user-provided CSE ID
-  const userCseId = localStorage.getItem('user_google_cse_id');
-  if (userCseId) {
-    console.log('Using user-provided Google CSE ID:', userCseId.substring(0, 4) + '...');
-    return userCseId;
+  try {
+    // First check for user-provided CSE ID
+    const userCseId = localStorage.getItem('user_google_cse_id');
+    if (userCseId && userCseId.trim() !== '') {
+      console.log('Using user-provided Google CSE ID:', userCseId.substring(0, 4) + '...');
+      return userCseId;
+    }
+  } catch (error) {
+    console.warn('Error accessing localStorage:', error);
   }
   
   // Fall back to environment variable
   const envCseId = import.meta.env.VITE_GOOGLE_CSE_ID;
-  if (envCseId) {
+  if (envCseId && envCseId.trim() !== '') {
     console.log('Using environment variable Google CSE ID:', envCseId.substring(0, 4) + '...');
     return envCseId;
   }

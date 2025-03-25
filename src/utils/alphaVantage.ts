@@ -11,18 +11,22 @@ const DAILY_CALL_LIMIT = 25; // Standard Alpha Vantage limit
  * 2. Environment variable
  */
 const getApiKey = (): string => {
-  // ALWAYS check localStorage fresh each time - no caching
-  const userKey = localStorage.getItem('user_alpha_vantage_key');
-  if (userKey && userKey.trim() !== '') {
-    // If user key exists and is different from current active key, reset daily count
-    if (activeApiKey !== null && activeApiKey !== userKey) {
-      console.log('New user API key detected, resetting call count');
-      dailyCallCount = 0;
+  try {
+    // ALWAYS check localStorage fresh each time - no caching
+    const userKey = localStorage.getItem('user_alpha_vantage_key');
+    if (userKey && userKey.trim() !== '') {
+      // If user key exists and is different from current active key, reset daily count
+      if (activeApiKey !== null && activeApiKey !== userKey) {
+        console.log('New user API key detected, resetting call count');
+        dailyCallCount = 0;
+      }
+      
+      console.log('Using user-provided Alpha Vantage API key:', userKey.substring(0, 4) + '...');
+      activeApiKey = userKey;
+      return userKey;
     }
-    
-    console.log('Using user-provided Alpha Vantage API key:', userKey.substring(0, 4) + '...');
-    activeApiKey = userKey;
-    return userKey;
+  } catch (error) {
+    console.warn('Error accessing localStorage:', error);
   }
   
   // Fall back to environment variable
