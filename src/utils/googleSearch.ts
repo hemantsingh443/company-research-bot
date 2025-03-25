@@ -3,22 +3,47 @@ const getGoogleApiKey = () => {
   try {
     // First check for user-provided key
     const userKey = localStorage.getItem('user_google_key');
-    if (userKey && userKey.trim() !== '') {
-      console.log('Using user-provided Google API key:', userKey.substring(0, 4) + '...');
-      return userKey;
+    console.log('Checking localStorage for Google API key...');
+    console.log('localStorage access successful:', !!userKey);
+    
+    if (userKey) {
+      console.log('User key found in localStorage:', {
+        length: userKey.length,
+        isEmpty: userKey.trim() === '',
+        firstChars: userKey.substring(0, 4)
+      });
+      
+      if (userKey.trim() !== '') {
+        console.log('Using user-provided Google API key:', userKey.substring(0, 4) + '...');
+        return userKey;
+      } else {
+        console.log('User key is empty or whitespace only');
+      }
+    } else {
+      console.log('No user key found in localStorage');
     }
   } catch (error) {
-    console.warn('Error accessing localStorage:', error);
+    console.error('Error accessing localStorage:', error);
+    console.log('localStorage error details:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
   }
   
   // Fall back to environment variable
   const envKey = import.meta.env.VITE_GOOGLE_API_KEY;
+  console.log('Checking environment variable...');
+  console.log('Environment key status:', {
+    exists: !!envKey,
+    isEmpty: envKey ? envKey.trim() === '' : true
+  });
+  
   if (envKey && envKey.trim() !== '') {
     console.log('Using environment variable Google API key:', envKey.substring(0, 4) + '...');
     return envKey;
   }
   
-  console.log('No Google API key found');
+  console.log('No valid Google API key found in either localStorage or environment variables');
   return null;
 };
 
@@ -74,6 +99,16 @@ export const searchWeb = async (query: string): Promise<string> => {
     
     const { apiKey, cseId } = validateGoogleConfig();
     
+    // Log key details (safely)
+    console.log('API Configuration:', {
+      keyExists: !!apiKey,
+      keyLength: apiKey?.length,
+      keyFirstChars: apiKey?.substring(0, 4),
+      cseIdExists: !!cseId,
+      cseIdLength: cseId?.length,
+      isUserKey: !!localStorage.getItem('user_google_key')
+    });
+    
     // Add site: operator to focus on major business and financial sites
     const majorSites = [
       'reuters.com',
@@ -96,27 +131,45 @@ export const searchWeb = async (query: string): Promise<string> => {
     
     const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cseId}&q=${encodeURIComponent(enhancedQuery)}`;
     
-    // Log which API key is being used (user-provided or default)
-    const isUserKey = localStorage.getItem('user_google_key') !== null;
-    console.log(`Using ${isUserKey ? 'user-provided' : 'environment variable'} Google Search API key`);
-    
-    console.log(`Making request to: ${url.replace(apiKey, '[REDACTED]')}`);
+    // Log request details (without sensitive info)
+    console.log('Making request with:', {
+      queryLength: query.length,
+      enhancedQueryLength: enhancedQuery.length,
+      endpoint: 'customsearch/v1',
+      urlLength: url.length
+    });
     
     const response = await fetch(url);
     
+    // Log response details
+    console.log('Response received:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+    
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Google Search API error:', response.status);
-      console.error('Error details:', errorData);
+      console.error('Google Search API error details:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+        headers: Object.fromEntries(response.headers.entries())
+      });
 
       // Handle rate limit error
       if (response.status === 429) {
         const quotaLimit = errorData.error?.details?.[0]?.metadata?.quota_limit_value || '100';
         const message = `You've hit the daily quota limit (${quotaLimit} queries) for the Google Search API. ` +
-          (isUserKey 
+          (!!localStorage.getItem('user_google_key')
             ? 'Please try again tomorrow or consider upgrading your quota in the Google Cloud Console.'
             : 'Please add your own API key in settings to use your own quota.');
         throw new Error(message);
+      }
+
+      // Handle authentication errors
+      if (response.status === 401 || response.status === 403) {
+        throw new Error(`Google Search API authentication error: ${errorData.error?.message || 'Invalid API key'}. Please check your API key in settings.`);
       }
 
       // Handle other API errors
@@ -124,6 +177,12 @@ export const searchWeb = async (query: string): Promise<string> => {
     }
 
     const data: GoogleSearchResponse = await response.json();
+    
+    // Log response data summary
+    console.log('Search results summary:', {
+      totalResults: data.items?.length || 0,
+      hasResults: !!data.items && data.items.length > 0
+    });
     
     if (!data.items || data.items.length === 0) {
       console.log('No search results found');
@@ -147,6 +206,11 @@ export const searchWeb = async (query: string): Promise<string> => {
     return processedResults || 'No results from major sources found. Please try a different search query.';
   } catch (error) {
     console.error('Error in searchWeb:', error);
+    console.error('Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown error',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     throw error;
   }
 };
