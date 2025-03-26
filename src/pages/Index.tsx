@@ -16,10 +16,10 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen border border-red-500 bg-gradient-to-b from-background to-muted/30">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       {/* <p>helo</p>
       <Helmet> */}
-      <div className='border border-green-500 flex flex-col items-center justify-center'>
+      <div className='flex flex-col items-center justify-center'>
         <h1 className='text-6xl text-center py-5 font-bold text-[#2D95FE]'>Company Research Intelligence</h1>
         <p className='text-2xl text-center py-5 font-semibold text-gray-400 w-[70%]'>AI-powered company research platform providing comprehensive business intelligence and investment analysis</p>
       </div>
